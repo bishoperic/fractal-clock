@@ -1,3 +1,8 @@
+import p5 from 'p5';
+
+import './style.css';
+'use strict';
+
 let vw, vh;
 let hw, hh;
 let depth = 9;
@@ -6,143 +11,146 @@ let shrinkfactor = Math.sqrt(2) / 2;
 let time;
 let avgdelta = [];
 
-'use strict';
+const _app = new p5(p5Instance => {
+  const p = p5Instance;
 
-function setup() {
-  createCanvas(1280, 1280);
-  frameRate(30);
-  vw = width / 100;
-  vh = height / 100;
-  hw = width / 2;
-  hh = height / 2;
+  p.setup = function setup() {
+    p.createCanvas(1280, 1280);
+    p.frameRate(30);
+    vw = p.width / 100;
+    vh = p.height / 100;
+    hw = p.width / 2;
+    hh = p.height / 2;
 
-  rectMode(CENTER);
-  angleMode(RADIANS);
-  textAlign(CENTER, CENTER);
-  textSize(18);
-  colorMode(HSB);
-}
+    p.rectMode(p.CENTER);
+    p.angleMode(p.RADIANS);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(18);
+    p.colorMode(p.HSB);
+  };
 
-function draw() {
-  background(0, 0, 15);
-  fill(0, 0, 100);
+  p.draw = function draw() {
+    p.background(0, 0, 15);
+    p.fill(0, 0, 100);
 
-  avgdelta.unshift(deltaTime);
+    avgdelta.unshift(p.deltaTime);
 
-  if (avgdelta.length > 10) {
-    let avg = avgdelta.reduce((a, b) => a + b) / avgdelta.length;
+    if (avgdelta.length > 10) {
+      let avg = avgdelta.reduce((a, b) => a + b) / avgdelta.length;
 
-    if (avg > 50) {
+      if (avg > 50) {
+        --depth;
+        avgdelta.length = 0;
+      } else {
+        avgdelta.length = 10;
+      }
+
+    } else if (p.deltaTime > 500) {
       --depth;
-      avgdelta.length = 0;
-    } else {
-      avgdelta.length = 10;
     }
 
-  } else if (deltaTime > 500) {
-    --depth;
-  }
+    p.noStroke();
+    p.smooth();
 
-  noStroke();
-  smooth();
+    time = Date.now() % (1000 * 60 * 60 * 24);
+    let hour = (time / (1000 * 60 * 60)) % 24;
+    let minute = (time / (1000 * 60)) % 60;
+    let second = (time / 1000) % 60;
 
-  time = Date.now() % (1000 * 60 * 60 * 24);
-  let hour = (time / (1000 * 60 * 60)) % 24;
-  let minute = (time / (1000 * 60)) % 60;
-  let second = (time / 1000) % 60;
+    let hourAngle = p.map(hour, 0, 24, 0, p.TWO_PI);
+    let minuteAngle = p.map(minute, 0, 60, 0, p.TWO_PI);
+    let secondAngle = p.map(second, 0, 60, 0, p.TWO_PI);
 
-  let hourAngle = map(hour, 0, 24, 0, TWO_PI);
-  let minuteAngle = map(minute, 0, 60, 0, TWO_PI);
-  let secondAngle = map(second, 0, 60, 0, TWO_PI);
+    // angles = [hourAngle, minuteAngle, secondAngle];
+    angles = [minuteAngle, secondAngle];
 
-  // angles = [hourAngle, minuteAngle, secondAngle];
-  angles = [minuteAngle, secondAngle];
+    let hands = [
+      // new Stick(createVector(0), hourAngle, 150, 5),
+      new Stick(p.createVector(0), minuteAngle, 150, 4),
+      new Stick(p.createVector(0), secondAngle, 150, 3)
+    ];
 
-  let hands = [
-    // new Stick(createVector(0), hourAngle, 150, 5),
-    new Stick(createVector(0), minuteAngle, 150, 4),
-    new Stick(createVector(0), secondAngle, 150, 3)
-  ];
+    for (let i = 0; i < depth; i++) {
+      for (const hand of hands) {
+        hand.addLayer();
+      }
+    }
 
-  for (let i = 0; i < depth; i++) {
+    p.translate(hw, hh);
+    p.push();
+
+    p.strokeWeight(0)
+    for (let i = 0; i < 60; i++) {
+      let angle = (i + 1) * p.PI / 30;
+      p.rotate(p.PI / 30);
+      if ((i + 1) % 5 == 0) {
+        p.rect(0, -200, 6, 20);
+
+        p.push();
+
+        let dist = 165;
+        p.rotate(-angle);
+        p.translate(-p.sin(-angle) * dist, -p.cos(-angle) * dist);
+
+        p.text((i + 1) / 5, 0, 0);
+
+        p.pop();
+
+      } else {
+        p.rect(0, -204, 4, 10);
+      }
+    }
+
+    p.push()
     for (const hand of hands) {
-      hand.addLayer();
+      hand.draw();
     }
-  }
+    p.pop();
 
-  translate(hw, hh);
-  push();
+    p.pop();
 
-  strokeWeight(0)
-  for (let i = 0; i < 60; i++) {
-    let angle = (i + 1) * PI / 30;
-    rotate(PI / 30);
-    if ((i + 1) % 5 == 0) {
-      rect(0, -200, 6, 20);
+  };
 
-      push();
-
-      let dist = 165;
-      rotate(-angle);
-      translate(-sin(-angle) * dist, -cos(-angle) * dist);
-
-      text((i + 1) / 5, 0, 0);
-
-      pop();
-
-    } else {
-      rect(0, -204, 4, 10);
+  class Stick {
+    constructor(startpoint, angle, length, weight, depth = 0) {
+      this.angle = angle;
+      this.length = length;
+      this.weight = weight;
+      this.start = startpoint;
+      this.children = [];
+      this.depth = depth;
     }
-  }
 
-  push()
-  for (const hand of hands) {
-    hand.draw();
-  }
-  pop();
-
-  pop();
-
-}
-
-class Stick {
-  constructor(startpoint, angle, length, weight, depth = 0) {
-    this.angle = angle;
-    this.length = length;
-    this.weight = weight;
-    this.start = startpoint;
-    this.children = [];
-    this.depth = depth;
-  }
-
-  draw() {
-    push();
-    translate(this.start);
-    rotate(this.angle);
-    if (this.depth == 0) {
-      stroke(0, 0, 100);
-    } else {
-      stroke(map((time / 15000 - this.depth / (depth * 2)) % 2, 0, 2, 0, 360, true), 77, 77);
-    }
-    strokeWeight(this.weight);
-    line(0, 0, 0, -this.length);
-
-
-    for (const child of this.children) {
-      child.draw();
-    }
-    pop()
-  }
-
-  addLayer() {
-    if (this.children.length == 0) {
-      for (const angle of angles) {
-        this.children.push(new Stick(createVector(0, -this.length), angle, this.length * shrinkfactor, this.weight * 0.85, this.depth + 1));
+    draw() {
+      p.push();
+      p.translate(this.start);
+      p.rotate(this.angle);
+      if (this.depth == 0) {
+        p.stroke(0, 0, 100);
+      } else {
+        p.stroke(p.map((time / 15000 - this.depth / (depth * 2)) % 2, 0, 2, 0, 360, true), 77, 77);
       }
-    } else {
+      p.strokeWeight(this.weight);
+      p.line(0, 0, 0, -this.length);
+
+
       for (const child of this.children) {
-        child.addLayer();
+        child.draw();
+      }
+      p.pop()
+    }
+
+    addLayer() {
+      if (this.children.length == 0) {
+        for (const angle of angles) {
+          this.children.push(new Stick(p.createVector(0, -this.length), angle, this.length * shrinkfactor, this.weight * 0.85, this.depth + 1));
+        }
+      } else {
+        for (const child of this.children) {
+          child.addLayer();
+        }
       }
     }
   }
-}
+}, document.getElementById('app'));
+
