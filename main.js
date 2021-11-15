@@ -65,7 +65,7 @@ const _app = new p5(p5Instance => {
     // angles = [minuteAngle, secondAngle];
 
     let hands = [
-      new Stick(createVector(0), hourAngle, 150, 5),
+      new Stick(p.createVector(0), hourAngle, 150, 5),
       new Stick(p.createVector(0), minuteAngle, 150, 4),
       new Stick(p.createVector(0), secondAngle, 150, 3)
     ];
