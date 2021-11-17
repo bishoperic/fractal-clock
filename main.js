@@ -61,13 +61,13 @@ const _app = new p5(p5Instance => {
     let minuteAngle = p.map(minute, 0, 60, 0, p.TWO_PI);
     let secondAngle = p.map(second, 0, 60, 0, p.TWO_PI);
 
-    angles = [hourAngle, minuteAngle];
-    // angles = [minuteAngle, secondAngle];
+    // angles = [hourAngle, minuteAngle];
+    angles = [minuteAngle, secondAngle];
 
     let hands = [
-      new Stick(p.createVector(0), hourAngle, 150, 5),
+      // new Stick(p.createVector(0), hourAngle, 150, 5),
       new Stick(p.createVector(0), minuteAngle, 150, 4),
-      // new Stick(p.createVector(0), secondAngle, 150, 3)
+      new Stick(p.createVector(0), secondAngle, 150, 3)
     ];
 
     for (let i = 0; i < depth; i++) {
